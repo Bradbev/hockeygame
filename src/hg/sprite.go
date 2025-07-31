@@ -12,8 +12,9 @@ import (
 type Sprite struct {
 	image      *ebiten.Image
 	alphaImage *image.Alpha
-	X          int
-	Y          int
+	x          int
+	y          int
+	extra      any
 }
 
 func NewSpriteSprite(sprite *Sprite) *Sprite {
@@ -46,7 +47,7 @@ func (s *Sprite) Draw(screen *ebiten.Image) {
 // DrawWithAlpha draws the sprite.
 func (s *Sprite) DrawWithAlpha(screen *ebiten.Image, alpha float32) {
 	op := &ebiten.DrawImageOptions{}
-	op.GeoM.Translate(float64(s.X), float64(s.Y))
+	op.GeoM.Translate(float64(s.x), float64(s.y))
 	op.ColorScale.ScaleAlpha(alpha)
 	screen.DrawImage(s.image, op)
 }
@@ -59,6 +60,6 @@ func (s *Sprite) In(x, y int) bool {
 	// Use alphaImage (*image.Alpha) instead of image (*ebiten.Image) here.
 	// It is because (*ebiten.Image).At is very slow as this reads pixels from GPU,
 	// and should be avoided whenever possible.
-	ret := s.alphaImage.At(x-s.X, y-s.Y).(color.Alpha).A > 0
+	ret := s.alphaImage.At(x-s.x, y-s.y).(color.Alpha).A > 0
 	return ret
 }

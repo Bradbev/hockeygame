@@ -1,6 +1,10 @@
 package hg
 
-import "github.com/hajimehoshi/ebiten/v2"
+import (
+	"slices"
+
+	"github.com/hajimehoshi/ebiten/v2"
+)
 
 type SpriteGroup struct {
 	sprites []*Sprite
@@ -8,6 +12,12 @@ type SpriteGroup struct {
 
 func (s *SpriteGroup) Add(sprite *Sprite) {
 	s.sprites = append(s.sprites, sprite)
+}
+
+func (s *SpriteGroup) Remove(sprite *Sprite) {
+	s.sprites = slices.DeleteFunc(s.sprites, func(sp *Sprite) bool {
+		return sprite == sp
+	})
 }
 
 func (s *SpriteGroup) Draw(screen *ebiten.Image) {
