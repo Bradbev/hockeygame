@@ -42,6 +42,11 @@ func NewPlayerFromImage(img *ebiten.Image) *Player {
 	}
 }
 
+func (p *Player) CopyImagesFrom(player *Player) {
+	p.alphaImage = player.alphaImage
+	p.image = player.image
+}
+
 func (s *Player) Draw(screen *ebiten.Image) {
 	s.DrawWithAlpha(screen, 1)
 }

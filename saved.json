@@ -1,19 +1,47 @@
 {
- "Players": [
-  {
-   "Symbol": "F3",
-   "Team": 0,
-   "X": 252,
-   "Y": 320,
-   "Id": 2
-  },
-  {
-   "Symbol": "LW",
-   "Team": 0,
-   "X": 159,
-   "Y": 254,
-   "Id": 3
-  }
- ],
- "NextPlayerId": 4
+    "NextPlayerId": 1,
+    "Frames": [
+        {
+            "Players": {
+                "Players": [
+                    {
+                        "X": 171,
+                        "Y": 397,
+                        "Id": 0,
+                        "Team": 0,
+                        "Symbol": "F"
+                    }
+                ]
+            },
+            "DurationSeconds": 1
+        },
+        {
+            "Players": {
+                "Players": [
+                    {
+                        "X": 170,
+                        "Y": 185,
+                        "Id": 0,
+                        "Team": 0,
+                        "Symbol": "F"
+                    }
+                ]
+            },
+            "DurationSeconds": 1
+        },
+        {
+            "Players": {
+                "Players": [
+                    {
+                        "X": 288,
+                        "Y": 296,
+                        "Id": 0,
+                        "Team": 0,
+                        "Symbol": "F"
+                    }
+                ]
+            },
+            "DurationSeconds": 1
+        }
+    ]
 }

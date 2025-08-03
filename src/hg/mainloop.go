@@ -2,6 +2,7 @@ package hg
 
 import (
 	"encoding/json"
+	"fmt"
 	"image"
 	"image/color"
 	_ "image/png"
@@ -23,18 +24,17 @@ type Game struct {
 	debugui          debugui.DebugUI
 	initDone         bool
 	fixedPlayers     *PlayerGroup
-	players          *PlayerGroup
 	nextPlayerId     int
 	activeDragSprite *Player
 	dragController   *DragController
 	frames           []frame
-	activeFrame      *frame
+	activeFrameIndex int
 }
 
 type frame struct {
 	Players *PlayerGroup
 	// DurationSeconds is how long this frame plays for
-	DurationSeconds float32
+	DurationSeconds float64
 }
 
 type playerSaveKey struct {
@@ -44,12 +44,14 @@ type playerSaveKey struct {
 
 func NewGame() *Game {
 	g := &Game{
-		fixedPlayers:   &PlayerGroup{},
-		players:        &PlayerGroup{},
+		fixedPlayers: &PlayerGroup{},
+		//players:        &PlayerGroup{},
 		dragController: &DragController{},
-		frames:         []frame{{Players: &PlayerGroup{}}},
+		frames: []frame{{
+			Players:         &PlayerGroup{},
+			DurationSeconds: 1}},
 	}
-	g.activeFrame = &g.frames[0]
+	g.activeFrameIndex = 0
 	return g
 }
 
@@ -81,7 +83,6 @@ type saveLoadSprite struct {
 }
 
 type saveLoadData struct {
-	Players      []saveLoadSprite
 	NextPlayerId int
 	Frames       []frame
 }
@@ -90,15 +91,6 @@ func (g *Game) Save() {
 	sld := saveLoadData{
 		NextPlayerId: g.nextPlayerId,
 		Frames:       g.frames,
-	}
-	for _, s := range g.players.player {
-		sld.Players = append(sld.Players, saveLoadSprite{
-			Symbol: s.Symbol,
-			Team:   s.Team,
-			Id:     s.Id,
-			X:      s.X,
-			Y:      s.Y,
-		})
 	}
 	data, _ := json.MarshalIndent(sld, "", " ")
 	os.WriteFile("saved.json", data, os.ModePerm)
@@ -115,34 +107,36 @@ func (g *Game) Load() {
 		return
 	}
 	g.nextPlayerId = sld.NextPlayerId
-	g.players = &PlayerGroup{}
-	//g.frames = sld.Frames
-	//g.activeFrame = &sld.Frames[0]
 
 	extras := map[playerSaveKey]*Player{}
-	for _, player := range g.fixedPlayers.player {
+	for _, player := range g.fixedPlayers.Players {
 		extras[playerSaveKey{player.Symbol, player.Team}] = player
 	}
-	for _, toLoad := range sld.Players {
-		s := extras[playerSaveKey{symbol: toLoad.Symbol, team: toLoad.Team}]
-		if s != nil {
-			toAdd := *s
-			toAdd.Id = toLoad.Id
-			toAdd.X = toLoad.X
-			toAdd.Y = toLoad.Y
-			g.players.Add(&toAdd)
+	g.frames = sld.Frames
+	g.activeFrameIndex = 0
+	for _, frame := range g.frames {
+		for _, toLoad := range frame.Players.Players {
+			fixedPlayer := extras[playerSaveKey{symbol: toLoad.Symbol, team: toLoad.Team}]
+			if fixedPlayer != nil {
+				toLoad.CopyImagesFrom(fixedPlayer)
+			}
 		}
 	}
+}
+
+func (g *Game) activeFrame() *frame {
+	return &g.frames[g.activeFrameIndex]
 }
 
 func (g *Game) handleDragging() {
 	if g.dragController.DragActive() {
 		x, y := g.dragController.Position()
 		if g.dragController.DragStart() {
-			if placed := g.players.Under(x, y); placed != nil {
+			if placed := g.activeFrame().Players.Under(x, y); placed != nil {
 				g.activeDragSprite = placed
-				g.players.Remove(placed)
+				g.activeFrame().Players.Remove(placed)
 				x, y = g.dragController.SetOffset(x-placed.X, y-placed.Y)
+
 			} else if fixed := g.fixedPlayers.Under(x, y); fixed != nil {
 				g.activeDragSprite = NewPlayerFromPlayer(fixed)
 				g.activeDragSprite.Id = g.nextPlayerId
@@ -158,7 +152,7 @@ func (g *Game) handleDragging() {
 		if g.activeDragSprite != nil {
 			_, y := g.dragController.Position()
 			if y < 590 {
-				g.players.Add(g.activeDragSprite)
+				g.activeFrame().Players.Add(g.activeDragSprite)
 			}
 			g.activeDragSprite = nil
 		}
@@ -170,9 +164,17 @@ func (g *Game) Update() error {
 		g.init()
 	}
 	g.debugui.Update(func(ctx *debugui.Context) error {
-		ctx.Window("Test", image.Rect(526, 609, 875, 700), func(layout debugui.ContainerLayout) {
+		ctx.Window("Test", image.Rect(526, 609, 875, 790), func(layout debugui.ContainerLayout) {
 			ctx.Button("Save").On(func() { g.Save() })
 			ctx.Button("Load").On(func() { g.Load() })
+			ctx.Button("Next Frame").On(func() { g.NextFrame() })
+			ctx.Button("Prev Frame").On(func() { g.PreviousFrame() })
+			ctx.Button("New Frame").On(func() { g.NewFrame() })
+			ctx.Text(fmt.Sprintf("Frame: %d", g.activeFrameIndex))
+			ctx.NumberFieldF(&g.activeFrame().DurationSeconds, 0.01, 1)
+			if g.activeFrame().DurationSeconds < 0 {
+				g.activeFrame().DurationSeconds = 0
+			}
 		})
 		return nil
 	})
@@ -180,12 +182,30 @@ func (g *Game) Update() error {
 	return nil
 }
 
+func (g *Game) NewFrame() {
+	frame := *g.activeFrame()
+	frame.Players = frame.Players.Clone()
+	g.frames = append(g.frames, frame)
+}
+
+func (g *Game) PreviousFrame() {
+	if g.activeFrameIndex > 0 {
+		g.activeFrameIndex--
+	}
+}
+
+func (g *Game) NextFrame() {
+	if g.activeFrameIndex < len(g.frames)-1 {
+		g.activeFrameIndex++
+	}
+}
+
 func (g *Game) Draw(screen *ebiten.Image) {
 	screen.Fill(color.White)
 
 	screen.DrawImage(rink, &ebiten.DrawImageOptions{})
 	g.fixedPlayers.Draw(screen)
-	g.players.Draw(screen)
+	g.activeFrame().Players.Draw(screen)
 	if g.activeDragSprite != nil {
 		g.activeDragSprite.DrawWithAlpha(screen, 0.8)
 	}
