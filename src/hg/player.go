@@ -47,6 +47,11 @@ func (p *Player) CopyImagesFrom(player *Player) {
 	p.image = player.image
 }
 
+func (p *Player) CenterPoint() image.Point {
+	sz := p.image.Bounds().Size()
+	return image.Pt(p.X+sz.X/2, p.Y+sz.Y/2)
+}
+
 func (s *Player) Draw(screen *ebiten.Image) {
 	s.DrawWithAlpha(screen, 1)
 }

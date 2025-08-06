@@ -11,6 +11,7 @@ import (
 
 	"github.com/ebitengine/debugui"
 	"github.com/hajimehoshi/ebiten/v2"
+	"github.com/hajimehoshi/ebiten/v2/vector"
 )
 
 const (
@@ -21,14 +22,18 @@ const (
 var rink = mustLoadImage("assets/rink.png")
 
 type Game struct {
-	debugui          debugui.DebugUI
-	initDone         bool
+	debugui  debugui.DebugUI
+	initDone bool
+
 	fixedPlayers     *PlayerGroup
 	nextPlayerId     int
-	activeDragSprite *Player
+	activeDragPlayer *Player
 	dragController   *DragController
 	frames           []frame
 	activeFrameIndex int
+	currentTime      float64
+
+	activeLinePoints []image.Point
 }
 
 type frame struct {
@@ -133,28 +138,38 @@ func (g *Game) handleDragging() {
 		x, y := g.dragController.Position()
 		if g.dragController.DragStart() {
 			if placed := g.activeFrame().Players.Under(x, y); placed != nil {
-				g.activeDragSprite = placed
+				g.activeDragPlayer = placed
 				g.activeFrame().Players.Remove(placed)
 				x, y = g.dragController.SetOffset(x-placed.X, y-placed.Y)
 
 			} else if fixed := g.fixedPlayers.Under(x, y); fixed != nil {
-				g.activeDragSprite = NewPlayerFromPlayer(fixed)
-				g.activeDragSprite.Id = g.nextPlayerId
+				g.activeDragPlayer = NewPlayerFromPlayer(fixed)
+				g.activeDragPlayer.Id = g.nextPlayerId
 				g.nextPlayerId++
 				x, y = g.dragController.SetOffset(x-fixed.X, y-fixed.Y)
 			}
 		}
-		if g.activeDragSprite != nil {
-			g.activeDragSprite.X = x
-			g.activeDragSprite.Y = y
+		if g.activeDragPlayer != nil {
+			g.activeDragPlayer.X = x
+			g.activeDragPlayer.Y = y
+			pt := g.activeDragPlayer.CenterPoint()
+			if len(g.activeLinePoints) == 0 {
+				g.activeLinePoints = append(g.activeLinePoints, pt)
+			} else {
+				dist := pt.Sub(g.activeLinePoints[len(g.activeLinePoints)-1])
+				minDist := 20
+				if dist.X*dist.X+dist.Y*dist.Y > minDist*minDist {
+					g.activeLinePoints = append(g.activeLinePoints, pt)
+				}
+			}
 		}
 	} else if g.dragController.Dropped() {
-		if g.activeDragSprite != nil {
+		if g.activeDragPlayer != nil {
 			_, y := g.dragController.Position()
 			if y < 590 {
-				g.activeFrame().Players.Add(g.activeDragSprite)
+				g.activeFrame().Players.Add(g.activeDragPlayer)
 			}
-			g.activeDragSprite = nil
+			g.activeDragPlayer = nil
 		}
 	}
 }
@@ -170,11 +185,12 @@ func (g *Game) Update() error {
 			ctx.Button("Next Frame").On(func() { g.NextFrame() })
 			ctx.Button("Prev Frame").On(func() { g.PreviousFrame() })
 			ctx.Button("New Frame").On(func() { g.NewFrame() })
-			ctx.Text(fmt.Sprintf("Frame: %d", g.activeFrameIndex))
+			ctx.Text(fmt.Sprintf("Frame: %d (%d)", g.activeFrameIndex+1, len(g.frames)))
 			ctx.NumberFieldF(&g.activeFrame().DurationSeconds, 0.01, 1)
 			if g.activeFrame().DurationSeconds < 0 {
 				g.activeFrame().DurationSeconds = 0
 			}
+			ctx.NumberFieldF(&g.currentTime, 0.01, 1)
 		})
 		return nil
 	})
@@ -206,9 +222,44 @@ func (g *Game) Draw(screen *ebiten.Image) {
 	screen.DrawImage(rink, &ebiten.DrawImageOptions{})
 	g.fixedPlayers.Draw(screen)
 	g.activeFrame().Players.Draw(screen)
-	if g.activeDragSprite != nil {
-		g.activeDragSprite.DrawWithAlpha(screen, 0.8)
+	if g.activeDragPlayer != nil {
+		g.activeDragPlayer.DrawWithAlpha(screen, 0.8)
 	}
+
+	if g.activeLinePoints != nil {
+		path := vector.Path{}
+		pt := g.activeLinePoints[0]
+		path.MoveTo(float32(pt.X), float32(pt.Y))
+		for _, pt := range g.activeLinePoints[1:] {
+			path.LineTo(float32(pt.X), float32(pt.Y))
+			vector.DrawFilledCircle(screen, float32(pt.X), float32(pt.Y), 5, color.Black, true)
+		}
+
+		// connect from the player to the last point
+		if g.activeDragPlayer != nil {
+			pt := g.activeDragPlayer.CenterPoint()
+			path.LineTo(float32(pt.X), float32(pt.Y))
+		}
+
+		vertices, indices := path.AppendVerticesAndIndicesForStroke(nil, nil, &vector.StrokeOptions{
+			Width: 1,
+		})
+		for i := range vertices {
+			vertices[i].SrcX = 1
+			vertices[i].SrcY = 1
+			vertices[i].ColorR = 0
+			vertices[i].ColorG = 0
+			vertices[i].ColorB = 0
+			vertices[i].ColorA = 1
+		}
+		op := &ebiten.DrawTrianglesOptions{
+			AntiAlias: true,
+			FillRule:  ebiten.FillRuleNonZero,
+		}
+		screen.DrawTriangles(vertices, indices, whiteSubImage, op)
+
+	}
+
 	g.debugui.Draw(screen)
 }
 
