@@ -17,6 +17,7 @@ type Player struct {
 	Id         int
 	Team       int
 	Symbol     string
+	SkatePath  *SkatePath
 }
 
 func NewPlayerFromPlayer(player *Player) *Player {
@@ -52,7 +53,20 @@ func (p *Player) CenterPoint() image.Point {
 	return image.Pt(p.X+sz.X/2, p.Y+sz.Y/2)
 }
 
+func (s *Player) Interpolate(fraction float32) {
+	if s.SkatePath != nil {
+		pt := s.SkatePath.Interpolate(fraction)
+		s.X, s.Y = int(pt.X), int(pt.Y)
+		sz := s.image.Bounds().Size()
+		s.X -= sz.X / 2
+		s.Y -= sz.Y / 2
+	}
+}
+
 func (s *Player) Draw(screen *ebiten.Image) {
+	if s.SkatePath != nil {
+		s.SkatePath.Draw(screen)
+	}
 	s.DrawWithAlpha(screen, 1)
 }
 

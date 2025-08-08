@@ -11,7 +11,6 @@ import (
 
 	"github.com/ebitengine/debugui"
 	"github.com/hajimehoshi/ebiten/v2"
-	"github.com/hajimehoshi/ebiten/v2/vector"
 )
 
 const (
@@ -33,7 +32,7 @@ type Game struct {
 	activeFrameIndex int
 	currentTime      float64
 
-	activeLinePoints []image.Point
+	activeSkatePath *SkatePath
 }
 
 type frame struct {
@@ -141,6 +140,7 @@ func (g *Game) handleDragging() {
 				g.activeDragPlayer = placed
 				g.activeFrame().Players.Remove(placed)
 				x, y = g.dragController.SetOffset(x-placed.X, y-placed.Y)
+				g.activeSkatePath = &SkatePath{TargetId: g.activeDragPlayer.Id}
 
 			} else if fixed := g.fixedPlayers.Under(x, y); fixed != nil {
 				g.activeDragPlayer = NewPlayerFromPlayer(fixed)
@@ -153,14 +153,8 @@ func (g *Game) handleDragging() {
 			g.activeDragPlayer.X = x
 			g.activeDragPlayer.Y = y
 			pt := g.activeDragPlayer.CenterPoint()
-			if len(g.activeLinePoints) == 0 {
-				g.activeLinePoints = append(g.activeLinePoints, pt)
-			} else {
-				dist := pt.Sub(g.activeLinePoints[len(g.activeLinePoints)-1])
-				minDist := 20
-				if dist.X*dist.X+dist.Y*dist.Y > minDist*minDist {
-					g.activeLinePoints = append(g.activeLinePoints, pt)
-				}
+			if g.activeSkatePath != nil {
+				g.activeSkatePath.AddPt(pt)
 			}
 		}
 	} else if g.dragController.Dropped() {
@@ -168,8 +162,13 @@ func (g *Game) handleDragging() {
 			_, y := g.dragController.Position()
 			if y < 590 {
 				g.activeFrame().Players.Add(g.activeDragPlayer)
+				if g.activeSkatePath != nil {
+					g.activeDragPlayer.SkatePath = g.activeSkatePath
+					g.activeDragPlayer.Interpolate(0)
+				}
 			}
 			g.activeDragPlayer = nil
+			g.activeSkatePath = nil
 		}
 	}
 }
@@ -195,6 +194,7 @@ func (g *Game) Update() error {
 		return nil
 	})
 	g.handleDragging()
+	g.activeFrame().Players.Interpolate(float32(g.currentTime))
 	return nil
 }
 
@@ -226,38 +226,12 @@ func (g *Game) Draw(screen *ebiten.Image) {
 		g.activeDragPlayer.DrawWithAlpha(screen, 0.8)
 	}
 
-	if g.activeLinePoints != nil {
-		path := vector.Path{}
-		pt := g.activeLinePoints[0]
-		path.MoveTo(float32(pt.X), float32(pt.Y))
-		for _, pt := range g.activeLinePoints[1:] {
-			path.LineTo(float32(pt.X), float32(pt.Y))
-			vector.DrawFilledCircle(screen, float32(pt.X), float32(pt.Y), 5, color.Black, true)
-		}
-
-		// connect from the player to the last point
+	if g.activeSkatePath != nil {
 		if g.activeDragPlayer != nil {
-			pt := g.activeDragPlayer.CenterPoint()
-			path.LineTo(float32(pt.X), float32(pt.Y))
+			g.activeSkatePath.DrawActive(screen, g.activeDragPlayer.CenterPoint())
+		} else {
+			g.activeSkatePath.Draw(screen)
 		}
-
-		vertices, indices := path.AppendVerticesAndIndicesForStroke(nil, nil, &vector.StrokeOptions{
-			Width: 1,
-		})
-		for i := range vertices {
-			vertices[i].SrcX = 1
-			vertices[i].SrcY = 1
-			vertices[i].ColorR = 0
-			vertices[i].ColorG = 0
-			vertices[i].ColorB = 0
-			vertices[i].ColorA = 1
-		}
-		op := &ebiten.DrawTrianglesOptions{
-			AntiAlias: true,
-			FillRule:  ebiten.FillRuleNonZero,
-		}
-		screen.DrawTriangles(vertices, indices, whiteSubImage, op)
-
 	}
 
 	g.debugui.Draw(screen)

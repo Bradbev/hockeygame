@@ -29,9 +29,15 @@ func (p *PlayerGroup) Remove(player *Player) {
 	})
 }
 
+func (p *PlayerGroup) Interpolate(fraction float32) {
+	for _, player := range p.Players {
+		player.Interpolate(fraction)
+	}
+}
+
 func (p *PlayerGroup) Draw(screen *ebiten.Image) {
-	for _, spr := range p.Players {
-		spr.Draw(screen)
+	for _, player := range p.Players {
+		player.Draw(screen)
 	}
 }
 

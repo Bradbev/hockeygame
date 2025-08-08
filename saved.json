@@ -1,47 +1,326 @@
 {
-    "NextPlayerId": 1,
-    "Frames": [
+ "NextPlayerId": 2,
+ "Frames": [
+  {
+   "Players": {
+    "Players": [
+     {
+      "X": 578,
+      "Y": 173,
+      "Id": 0,
+      "Team": 0,
+      "Symbol": "F",
+      "SkatePath": {
+       "TargetId": 0,
+       "Points": [
         {
-            "Players": {
-                "Players": [
-                    {
-                        "X": 171,
-                        "Y": 397,
-                        "Id": 0,
-                        "Team": 0,
-                        "Symbol": "F"
-                    }
-                ]
-            },
-            "DurationSeconds": 1
+         "X": 191,
+         "Y": 417,
+         "HeadingRadians": 0
         },
         {
-            "Players": {
-                "Players": [
-                    {
-                        "X": 170,
-                        "Y": 185,
-                        "Id": 0,
-                        "Team": 0,
-                        "Symbol": "F"
-                    }
-                ]
-            },
-            "DurationSeconds": 1
+         "X": 203,
+         "Y": 434,
+         "HeadingRadians": 0
         },
         {
-            "Players": {
-                "Players": [
-                    {
-                        "X": 288,
-                        "Y": 296,
-                        "Id": 0,
-                        "Team": 0,
-                        "Symbol": "F"
-                    }
-                ]
-            },
-            "DurationSeconds": 1
+         "X": 217,
+         "Y": 453,
+         "HeadingRadians": 0
+        },
+        {
+         "X": 233,
+         "Y": 471,
+         "HeadingRadians": 0
+        },
+        {
+         "X": 250,
+         "Y": 484,
+         "HeadingRadians": 0
+        },
+        {
+         "X": 269,
+         "Y": 492,
+         "HeadingRadians": 0
+        },
+        {
+         "X": 292,
+         "Y": 500,
+         "HeadingRadians": 0
+        },
+        {
+         "X": 315,
+         "Y": 508,
+         "HeadingRadians": 0
+        },
+        {
+         "X": 336,
+         "Y": 512,
+         "HeadingRadians": 0
+        },
+        {
+         "X": 356,
+         "Y": 514,
+         "HeadingRadians": 0
+        },
+        {
+         "X": 380,
+         "Y": 514,
+         "HeadingRadians": 0
+        },
+        {
+         "X": 408,
+         "Y": 511,
+         "HeadingRadians": 0
+        },
+        {
+         "X": 429,
+         "Y": 503,
+         "HeadingRadians": 0
+        },
+        {
+         "X": 448,
+         "Y": 493,
+         "HeadingRadians": 0
+        },
+        {
+         "X": 465,
+         "Y": 482,
+         "HeadingRadians": 0
+        },
+        {
+         "X": 481,
+         "Y": 467,
+         "HeadingRadians": 0
+        },
+        {
+         "X": 500,
+         "Y": 443,
+         "HeadingRadians": 0
+        },
+        {
+         "X": 512,
+         "Y": 426,
+         "HeadingRadians": 0
+        },
+        {
+         "X": 524,
+         "Y": 406,
+         "HeadingRadians": 0
+        },
+        {
+         "X": 537,
+         "Y": 382,
+         "HeadingRadians": 0
+        },
+        {
+         "X": 551,
+         "Y": 352,
+         "HeadingRadians": 0
+        },
+        {
+         "X": 563,
+         "Y": 321,
+         "HeadingRadians": 0
+        },
+        {
+         "X": 574,
+         "Y": 292,
+         "HeadingRadians": 0
+        },
+        {
+         "X": 582,
+         "Y": 268,
+         "HeadingRadians": 0
+        },
+        {
+         "X": 588,
+         "Y": 246,
+         "HeadingRadians": 0
+        },
+        {
+         "X": 592,
+         "Y": 226,
+         "HeadingRadians": 0
+        },
+        {
+         "X": 597,
+         "Y": 203,
+         "HeadingRadians": 0
+        },
+        {
+         "X": 600,
+         "Y": 181,
+         "HeadingRadians": 0
+        },
+        {
+         "X": 588,
+         "Y": 164,
+         "HeadingRadians": 0
+        },
+        {
+         "X": 575,
+         "Y": 144,
+         "HeadingRadians": 0
+        },
+        {
+         "X": 564,
+         "Y": 125,
+         "HeadingRadians": 0
+        },
+        {
+         "X": 553,
+         "Y": 108,
+         "HeadingRadians": 0
+        },
+        {
+         "X": 532,
+         "Y": 100,
+         "HeadingRadians": 0
+        },
+        {
+         "X": 508,
+         "Y": 100,
+         "HeadingRadians": 0
+        },
+        {
+         "X": 484,
+         "Y": 105,
+         "HeadingRadians": 0
+        },
+        {
+         "X": 464,
+         "Y": 112,
+         "HeadingRadians": 0
+        },
+        {
+         "X": 444,
+         "Y": 120,
+         "HeadingRadians": 0
         }
+       ]
+      }
+     },
+     {
+      "X": 350,
+      "Y": 319,
+      "Id": 1,
+      "Team": 0,
+      "Symbol": "D",
+      "SkatePath": {
+       "TargetId": 1,
+       "Points": [
+        {
+         "X": 231,
+         "Y": 186,
+         "HeadingRadians": 0
+        },
+        {
+         "X": 217,
+         "Y": 208,
+         "HeadingRadians": 0
+        },
+        {
+         "X": 215,
+         "Y": 235,
+         "HeadingRadians": 0
+        },
+        {
+         "X": 224,
+         "Y": 261,
+         "HeadingRadians": 0
+        },
+        {
+         "X": 238,
+         "Y": 276,
+         "HeadingRadians": 0
+        },
+        {
+         "X": 255,
+         "Y": 289,
+         "HeadingRadians": 0
+        },
+        {
+         "X": 278,
+         "Y": 304,
+         "HeadingRadians": 0
+        },
+        {
+         "X": 301,
+         "Y": 316,
+         "HeadingRadians": 0
+        },
+        {
+         "X": 319,
+         "Y": 325,
+         "HeadingRadians": 0
+        },
+        {
+         "X": 341,
+         "Y": 334,
+         "HeadingRadians": 0
+        },
+        {
+         "X": 365,
+         "Y": 339,
+         "HeadingRadians": 0
+        },
+        {
+         "X": 388,
+         "Y": 341,
+         "HeadingRadians": 0
+        },
+        {
+         "X": 406,
+         "Y": 354,
+         "HeadingRadians": 0
+        },
+        {
+         "X": 409,
+         "Y": 376,
+         "HeadingRadians": 0
+        },
+        {
+         "X": 400,
+         "Y": 396,
+         "HeadingRadians": 0
+        }
+       ]
+      }
+     }
     ]
+   },
+   "DurationSeconds": 1
+  },
+  {
+   "Players": {
+    "Players": [
+     {
+      "X": 170,
+      "Y": 185,
+      "Id": 0,
+      "Team": 0,
+      "Symbol": "F",
+      "SkatePath": null
+     }
+    ]
+   },
+   "DurationSeconds": 1
+  },
+  {
+   "Players": {
+    "Players": [
+     {
+      "X": 288,
+      "Y": 296,
+      "Id": 0,
+      "Team": 0,
+      "Symbol": "F",
+      "SkatePath": null
+     }
+    ]
+   },
+   "DurationSeconds": 1
+  }
+ ]
 }
