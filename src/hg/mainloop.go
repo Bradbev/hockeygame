@@ -25,12 +25,15 @@ type Game struct {
 	initDone bool
 
 	fixedPlayers     *PlayerGroup
+	buttons          *ButtonGroup
 	nextPlayerId     int
 	activeDragPlayer *Player
 	dragController   *DragController
 	frames           []frame
 	activeFrameIndex int
 	currentTime      float64
+
+	dragMovesPlayer bool
 
 	activeSkatePath *SkatePath
 }
@@ -48,8 +51,8 @@ type playerSaveKey struct {
 
 func NewGame() *Game {
 	g := &Game{
-		fixedPlayers: &PlayerGroup{},
-		//players:        &PlayerGroup{},
+		fixedPlayers:   &PlayerGroup{},
+		buttons:        &ButtonGroup{},
 		dragController: &DragController{},
 		frames: []frame{{
 			Players:         &PlayerGroup{},
@@ -67,16 +70,51 @@ func (g *Game) init() {
 	symbols := strings.Split("LW,RW,C,F,F1,F2,F3,LD,RD,D,X", ",")
 	for team, col := range colors {
 		for i, symbol := range symbols {
-			s, _ := MakeSymbol(symbol, 20, col)
+			s, _ := MakeCircle(symbol, 20, col)
 			player := NewPlayerFromImage(s)
 			player.Team = team
 			player.Symbol = symbol
-			player.X = i * (40 + 2)
+			player.X = i*(40+2) + 5
 			player.Y = 610 + team*42
 			g.fixedPlayers.Add(player)
 		}
 	}
+
+	g.makeButtons()
 	g.Load()
+}
+
+func (g *Game) makeButtons() {
+	w := float32(0)
+	h := float32(30)
+	x := 5
+	y := 698
+
+	button := func(s string, cb func()) {
+		b, err := MakeButton(s, w, h, x, y, color.RGBA{0x80, 0x80, 0x80, 1}, cb)
+		if err == nil {
+			g.buttons.Add(b)
+			y += int(h) + 5
+		}
+	}
+	newCol := func(newWidth float32) {
+		y = 698
+		x += int(w) + 5
+		w = newWidth
+	}
+	newCol(100)
+	button("Save", g.Save)
+	button("Load", g.Load)
+
+	newCol(150)
+	button("Move", func() { g.dragMovesPlayer = true })
+	button("Prev Frame", g.PreviousFrame)
+	button("New Frame", g.NewFrame)
+
+	newCol(150)
+	button("Skate", func() { g.dragMovesPlayer = false })
+	button("Next Frame", g.NextFrame)
+	button("Delete Frame", g.DeleteFrame)
 }
 
 type saveLoadSprite struct {
@@ -140,7 +178,11 @@ func (g *Game) handleDragging() {
 				g.activeDragPlayer = placed
 				g.activeFrame().Players.Remove(placed)
 				x, y = g.dragController.SetOffset(x-placed.X, y-placed.Y)
-				g.activeSkatePath = &SkatePath{TargetId: g.activeDragPlayer.Id}
+				if g.dragMovesPlayer {
+					g.activeDragPlayer.SkatePath = nil
+				} else {
+					g.activeSkatePath = &SkatePath{TargetId: g.activeDragPlayer.Id}
+				}
 
 			} else if fixed := g.fixedPlayers.Under(x, y); fixed != nil {
 				g.activeDragPlayer = NewPlayerFromPlayer(fixed)
@@ -148,7 +190,9 @@ func (g *Game) handleDragging() {
 				g.nextPlayerId++
 				x, y = g.dragController.SetOffset(x-fixed.X, y-fixed.Y)
 			}
+			g.buttons.OnDragStart(x, y)
 		}
+		g.buttons.OnDrag(x, y)
 		if g.activeDragPlayer != nil {
 			g.activeDragPlayer.X = x
 			g.activeDragPlayer.Y = y
@@ -158,13 +202,14 @@ func (g *Game) handleDragging() {
 			}
 		}
 	} else if g.dragController.Dropped() {
+		x, y := g.dragController.Position()
+		g.buttons.Dropped(x, y)
 		if g.activeDragPlayer != nil {
-			_, y := g.dragController.Position()
 			if y < 590 {
 				g.activeFrame().Players.Add(g.activeDragPlayer)
 				if g.activeSkatePath != nil {
+					g.activeSkatePath.AddClosingPt(g.activeDragPlayer.CenterPoint())
 					g.activeDragPlayer.SkatePath = g.activeSkatePath
-					g.activeDragPlayer.Interpolate(0)
 				}
 			}
 			g.activeDragPlayer = nil
@@ -179,11 +224,6 @@ func (g *Game) Update() error {
 	}
 	g.debugui.Update(func(ctx *debugui.Context) error {
 		ctx.Window("Test", image.Rect(526, 609, 875, 790), func(layout debugui.ContainerLayout) {
-			ctx.Button("Save").On(func() { g.Save() })
-			ctx.Button("Load").On(func() { g.Load() })
-			ctx.Button("Next Frame").On(func() { g.NextFrame() })
-			ctx.Button("Prev Frame").On(func() { g.PreviousFrame() })
-			ctx.Button("New Frame").On(func() { g.NewFrame() })
 			ctx.Text(fmt.Sprintf("Frame: %d (%d)", g.activeFrameIndex+1, len(g.frames)))
 			ctx.NumberFieldF(&g.activeFrame().DurationSeconds, 0.01, 1)
 			if g.activeFrame().DurationSeconds < 0 {
@@ -200,8 +240,19 @@ func (g *Game) Update() error {
 
 func (g *Game) NewFrame() {
 	frame := *g.activeFrame()
-	frame.Players = frame.Players.Clone()
+	frame.Players = frame.Players.CloneForNewFrame()
 	g.frames = append(g.frames, frame)
+	g.currentTime = 0
+	g.NextFrame()
+}
+
+func (g *Game) DeleteFrame() {
+	if len(g.frames) > 1 {
+		g.frames = g.frames[:len(g.frames)-1]
+		if g.activeFrameIndex >= len(g.frames) {
+			g.activeFrameIndex = len(g.frames) - 1
+		}
+	}
 }
 
 func (g *Game) PreviousFrame() {
@@ -221,6 +272,8 @@ func (g *Game) Draw(screen *ebiten.Image) {
 
 	screen.DrawImage(rink, &ebiten.DrawImageOptions{})
 	g.fixedPlayers.Draw(screen)
+	g.buttons.Draw(screen)
+
 	g.activeFrame().Players.Draw(screen)
 	if g.activeDragPlayer != nil {
 		g.activeDragPlayer.DrawWithAlpha(screen, 0.8)

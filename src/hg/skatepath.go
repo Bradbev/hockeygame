@@ -75,7 +75,7 @@ func (sp *SkatePath) drawActive(screen *ebiten.Image, lastPoint *image.Point) {
 		vertices[i].ColorR = 0
 		vertices[i].ColorG = 0
 		vertices[i].ColorB = 0
-		vertices[i].ColorA = 1
+		vertices[i].ColorA = 0.6
 	}
 	op := &ebiten.DrawTrianglesOptions{
 		AntiAlias: true,
@@ -107,6 +107,14 @@ func (sp *SkatePath) AddSkatePoint(p SkatePoint) {
 // AddPt is a helper to add a point from an image.Point.
 func (sp *SkatePath) AddPt(p image.Point) {
 	sp.AddSkatePoint(SkatePoint{X: float32(p.X), Y: float32(p.Y)})
+}
+
+func (sp *SkatePath) AddClosingPt(p image.Point) {
+	pt := SkatePoint{
+		X: float32(p.X),
+		Y: float32(p.Y),
+	}
+	sp.Points = append(sp.Points, pt)
 }
 
 // TotalLength calculates the total length of the path.

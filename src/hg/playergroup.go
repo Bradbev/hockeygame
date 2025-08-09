@@ -10,10 +10,12 @@ type PlayerGroup struct {
 	Players []*Player
 }
 
-func (p *PlayerGroup) Clone() *PlayerGroup {
+func (p *PlayerGroup) CloneForNewFrame() *PlayerGroup {
 	ret := &PlayerGroup{}
 	for _, p := range p.Players {
 		player := *p
+		player.Interpolate(1)
+		player.SkatePath = nil // Clear the skate path for new frame
 		ret.Players = append(ret.Players, &player)
 	}
 	return ret

@@ -32,7 +32,7 @@ func (g *Game) Draw(screen *ebiten.Image) {
 	dst := screen
 
 	dst.Fill(color.RGBA{0x0, 0x0, 0x0, 0xff})
-	s, err := hg.MakeSymbol("LW", 20, color.RGBA{0xff, 0, 0, 0})
+	s, err := hg.MakeCircle("LW", 20, color.RGBA{0xff, 0, 0, 0})
 	if err != nil {
 		fmt.Printf("%v\n", err)
 	}
