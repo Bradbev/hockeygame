@@ -174,14 +174,21 @@ func (g *Game) handleDragging() {
 	if g.dragController.DragActive() {
 		x, y := g.dragController.Position()
 		if g.dragController.DragStart() {
-			if placed := g.activeFrame().Players.Under(x, y); placed != nil {
-				g.activeDragPlayer = placed
-				g.activeFrame().Players.Remove(placed)
-				x, y = g.dragController.SetOffset(x-placed.X, y-placed.Y)
+			if player := g.activeFrame().Players.Under(x, y); player != nil {
+				g.activeDragPlayer = player
+				g.activeFrame().Players.Remove(player)
+				x, y = g.dragController.SetOffset(x-player.X, y-player.Y)
 				if g.dragMovesPlayer {
 					g.activeDragPlayer.SkatePath = nil
 				} else {
-					g.activeSkatePath = &SkatePath{TargetId: g.activeDragPlayer.Id}
+					sp := &SkatePath{TargetId: g.activeDragPlayer.Id}
+					if player.SkatePath != nil {
+						// If the player already has a skate path, use it.
+						sp = player.SkatePath
+						sp.TruncatePathToFraction(float32(g.currentTime))
+					}
+					//g.activeSkatePath = &SkatePath{TargetId: g.activeDragPlayer.Id}
+					g.activeSkatePath = sp
 				}
 
 			} else if fixed := g.fixedPlayers.Under(x, y); fixed != nil {

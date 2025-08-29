@@ -10,7 +10,7 @@ import (
 
 // SkatePoint represents a 2D point with float32 coordinates and a heading.
 type SkatePoint struct {
-	X, Y, HeadingRadians float32
+	X, Y float32
 }
 
 // Sub returns the vector p-q.
@@ -162,17 +162,6 @@ func (sp *SkatePath) Interpolate(fraction float32) SkatePoint {
 			// The position is interpolated.
 			interpolatedPoint := p1.Add(segmentVector.Mul(segmentFraction))
 
-			h1 := p1.HeadingRadians
-			h2 := p2.HeadingRadians
-
-			// Find the shortest angle between h1 and h2 to handle wrapping at +/- PI.
-			delta := h2 - h1
-			if delta > math.Pi {
-				delta -= 2 * math.Pi
-			} else if delta < -math.Pi {
-				delta += 2 * math.Pi
-			}
-			interpolatedPoint.HeadingRadians = h1 + segmentFraction*delta
 			return interpolatedPoint
 		}
 		distCovered += segmentLength
@@ -180,4 +169,32 @@ func (sp *SkatePath) Interpolate(fraction float32) SkatePoint {
 
 	// If fraction is 1.0 or slightly more due to float inaccuracies, return the last point.
 	return sp.Points[len(sp.Points)-1]
+}
+
+func (sp *SkatePath) TruncatePathToFraction(fraction float32) {
+	if len(sp.Points) <= 1 {
+		sp.Points = nil
+		return
+	}
+
+	targetDist := sp.TotalLength() * fraction
+	if targetDist <= 0 {
+		sp.Points = nil
+		return
+	}
+
+	var distCovered float32
+	for i := 0; i < len(sp.Points)-1; i++ {
+		p1 := sp.Points[i]
+		p2 := sp.Points[i+1]
+		segmentVector := p2.Sub(p1)
+		segmentLength := segmentVector.Length()
+
+		if distCovered+segmentLength >= targetDist {
+			// We found the segment where the target distance falls.
+			sp.Points = sp.Points[:i+1] // Keep points up to this segment
+			return
+		}
+		distCovered += segmentLength
+	}
 }
