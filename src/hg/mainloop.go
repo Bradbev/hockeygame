@@ -7,6 +7,7 @@ import (
 	"image/color"
 	_ "image/png"
 	"os"
+	"slices"
 	"strings"
 
 	"github.com/ebitengine/debugui"
@@ -82,6 +83,7 @@ func (g *Game) init() {
 
 	g.makeButtons()
 	g.Load()
+	g.dragMovesPlayer = true
 }
 
 func (g *Game) makeButtons() {
@@ -294,7 +296,24 @@ func (g *Game) Draw(screen *ebiten.Image) {
 		}
 	}
 
+	g.DrawTest(screen)
+
 	g.debugui.Draw(screen)
+}
+
+func (g *Game) DrawTest(screen *ebiten.Image) {
+	spath := &SkatePathWithRadius{}
+	players := make([]*Player, len(g.activeFrame().Players.Players))
+	if g.activeDragPlayer != nil {
+		players = append(players, g.activeDragPlayer)
+	}
+	copy(players, g.activeFrame().Players.Players)
+	slices.SortFunc(players, func(a, b *Player) int { return a.Id - b.Id })
+	for _, p := range players {
+		spath.Points = append(spath.Points, SkatePoint{float32(p.CenterPoint().X), float32(p.CenterPoint().Y)})
+		spath.PointRadiuses = append(spath.PointRadiuses, 80)
+	}
+	spath.Draw(screen)
 }
 
 func (g *Game) Layout(outsideWidth, outsideHeight int) (screenWidth, screenHeight int) {
