@@ -29,7 +29,7 @@ type Game struct {
 	buttons          *ButtonGroup
 	nextPlayerId     int
 	activeDragPlayer *Player
-	dragController   *DragController
+	mouseController  *MouseController
 	frames           []frame
 	activeFrameIndex int
 	currentTime      float64
@@ -37,6 +37,8 @@ type Game struct {
 	dragMovesPlayer bool
 
 	activeSkatePath *SkatePath
+
+	testSkatePath *SkatePathWithRadius
 }
 
 type frame struct {
@@ -52,12 +54,22 @@ type playerSaveKey struct {
 
 func NewGame() *Game {
 	g := &Game{
-		fixedPlayers:   &PlayerGroup{},
-		buttons:        &ButtonGroup{},
-		dragController: &DragController{},
+		fixedPlayers:    &PlayerGroup{},
+		buttons:         &ButtonGroup{},
+		mouseController: &MouseController{},
 		frames: []frame{{
 			Players:         &PlayerGroup{},
 			DurationSeconds: 1}},
+		testSkatePath: &SkatePathWithRadius{
+			Points: []SkatePoint{
+				{X: 200, Y: 100},
+				{X: 400, Y: 200},
+				{X: 300, Y: 300},
+			},
+			PointRadiuses:   []float32{0, 5, 0},
+			editPointIndex:  -1,
+			editRadiusIndex: -1,
+		},
 	}
 	g.activeFrameIndex = 0
 	return g
@@ -173,13 +185,13 @@ func (g *Game) activeFrame() *frame {
 }
 
 func (g *Game) handleDragging() {
-	if g.dragController.DragActive() {
-		x, y := g.dragController.Position()
-		if g.dragController.DragStart() {
+	if g.mouseController.DragActive() {
+		x, y := g.mouseController.Position()
+		if g.mouseController.DragStart() {
 			if player := g.activeFrame().Players.Under(x, y); player != nil {
 				g.activeDragPlayer = player
 				g.activeFrame().Players.Remove(player)
-				x, y = g.dragController.SetOffset(x-player.X, y-player.Y)
+				x, y = g.mouseController.SetOffset(x-player.X, y-player.Y)
 				if g.dragMovesPlayer {
 					g.activeDragPlayer.SkatePath = nil
 				} else {
@@ -197,7 +209,7 @@ func (g *Game) handleDragging() {
 				g.activeDragPlayer = NewPlayerFromPlayer(fixed)
 				g.activeDragPlayer.Id = g.nextPlayerId
 				g.nextPlayerId++
-				x, y = g.dragController.SetOffset(x-fixed.X, y-fixed.Y)
+				x, y = g.mouseController.SetOffset(x-fixed.X, y-fixed.Y)
 			}
 			g.buttons.OnDragStart(x, y)
 		}
@@ -210,8 +222,8 @@ func (g *Game) handleDragging() {
 				g.activeSkatePath.AddPt(pt)
 			}
 		}
-	} else if g.dragController.Dropped() {
-		x, y := g.dragController.Position()
+	} else if g.mouseController.Dropped() {
+		x, y := g.mouseController.Position()
 		g.buttons.Dropped(x, y)
 		if g.activeDragPlayer != nil {
 			if y < 590 {
@@ -242,8 +254,14 @@ func (g *Game) Update() error {
 		})
 		return nil
 	})
+	g.mouseController.Update()
+	if g.mouseController.IsDoubleClick() {
+		fmt.Println("Double click")
+	}
 	g.handleDragging()
 	g.activeFrame().Players.Interpolate(float32(g.currentTime))
+
+	g.testSkatePath.UpdateForEdit(g.mouseController)
 	return nil
 }
 
@@ -297,6 +315,8 @@ func (g *Game) Draw(screen *ebiten.Image) {
 	}
 
 	g.DrawTest(screen)
+
+	g.testSkatePath.DrawForEdit(screen)
 
 	g.debugui.Draw(screen)
 }

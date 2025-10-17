@@ -5,27 +5,27 @@
    "Players": {
     "Players": [
      {
-      "X": 271,
-      "Y": 267,
-      "Id": 4,
-      "Team": 0,
-      "Symbol": "LD",
-      "SkatePath": null
-     },
-     {
-      "X": 711,
-      "Y": 132,
+      "X": 1224,
+      "Y": 116,
       "Id": 2,
       "Team": 0,
       "Symbol": "C",
       "SkatePath": null
      },
      {
-      "X": 658,
-      "Y": 376,
+      "X": 1190,
+      "Y": 507,
       "Id": 3,
       "Team": 0,
       "Symbol": "F2",
+      "SkatePath": null
+     },
+     {
+      "X": 757,
+      "Y": 531,
+      "Id": 4,
+      "Team": 0,
+      "Symbol": "LD",
       "SkatePath": null
      }
     ]
